@@ -1,0 +1,28 @@
+plugins {
+    id 'com.github.johnrengelman.shadow' version '2.0.4'
+    id 'java'
+}
+
+group 'org.example'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+    maven { url 'https://jitpack.io' }
+    maven { url "https://libraries.minecraft.net" }
+}
+
+dependencies {
+    implementation("io.netty:netty-all:4.1.67.Final")
+    implementation("com.google.guava:guava:30.1.1-jre")
+    implementation("org.slf4j:slf4j-api:1.7.30")
+    implementation("com.mojang:brigadier:1.0.18")
+    implementation("org.yaml:snakeyaml:1.29")
+    implementation("dev.dewy:nbt:1.2.0")
+    compileOnly("org.projectlombok:lombok:1.18.12")
+    annotationProcessor("org.projectlombok:lombok:1.18.12")
+}
+
+jar {
+    finalizedBy shadowJar
+}
