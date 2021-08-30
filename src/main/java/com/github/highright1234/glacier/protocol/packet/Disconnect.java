@@ -2,16 +2,17 @@ package com.github.highright1234.glacier.protocol.packet;
 
 import com.github.highright1234.glacier.protocol.AbstractPacket;
 import io.netty.buffer.ByteBuf;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-public class HandshakePacket extends AbstractPacket {
+@EqualsAndHashCode(callSuper = true)
+@Data
+public class Disconnect extends AbstractPacket {
 
-    @Override
-    public void read(ByteBuf buf) {
-
-    }
+    private String reason;
 
     @Override
     public void write(ByteBuf buf) {
-
+        writeString(reason, buf);
     }
 }

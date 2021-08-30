@@ -50,7 +50,7 @@ public class BufUtil {
         return readString0(buf, 262144);
     }
 
-    private static String readString0(ByteBuf buf, int maxLength) {
+    public static String readString0(ByteBuf buf, int maxLength) {
         int length = readVarInt( buf );
         if ( length > maxLength * 4 ) {
             return null;
@@ -69,6 +69,12 @@ public class BufUtil {
 
     public static UUID readUUID(ByteBuf buf) {
         return new UUID(buf.readLong(), buf.readLong());
+    }
+
+    public static Object read(Class<? extends  ByteBufDeSerialization> clazz, ByteBuf buf) throws InstantiationException, IllegalAccessException {
+        ByteBufDeSerialization out = clazz.newInstance();
+        out.deserialization(buf);
+        return out;
     }
 
     public static void writeVarInt(int value, ByteBuf buf) {
@@ -97,7 +103,15 @@ public class BufUtil {
     }
 
     public static void writeString(String value, ByteBuf buf) {
-        if (value.length() > Short.MAX_VALUE) {
+        writeString0(value, buf, Short.MAX_VALUE);
+    }
+
+    public static void writeChat(String value, ByteBuf buf) {
+        writeString0(value, buf, 262144);
+    }
+
+    private static void writeString0(String value, ByteBuf buf, int maxLength) {
+        if (value.length() > maxLength) {
             return;
         }
         writeVarInt(value.length(), buf);
@@ -107,5 +121,9 @@ public class BufUtil {
     public static void writeUUID(UUID value, ByteBuf buf) {
         buf.writeLong(value.getMostSignificantBits());
         buf.writeLong(value.getLeastSignificantBits());
+    }
+
+    public static void write(ByteBufSerialization object, ByteBuf buf) {
+        object.serialization(buf);
     }
 }

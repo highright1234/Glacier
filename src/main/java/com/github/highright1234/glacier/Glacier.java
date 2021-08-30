@@ -1,5 +1,8 @@
 package com.github.highright1234.glacier;
 
+import com.github.highright1234.glacier.protocol.PacketDecoder;
+import com.github.highright1234.glacier.protocol.PacketEncoder;
+import com.github.highright1234.glacier.protocol.Protocol;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
@@ -9,12 +12,22 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.util.AttributeKey;
 import lombok.Getter;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public class Glacier {
+
+    public static final AttributeKey<ClientConnection> CONNECTION = AttributeKey.valueOf( "ListerInfo" );
+    public static final String MINECRAFT_ENCODER = "minecraft-encoder";
+    public static final String MINECRAFT_DECODER = "minecraft-decoder";
+    public static final String PACKET_ENCODER = "packet-encoder";
+    public static final String PACKET_DECODER = "packet-decoder";
 
     private static Glacier instance;
 
@@ -22,19 +35,30 @@ public class Glacier {
         return instance;
     }
 
+    private final List<ClientConnection> clientConnections = new ArrayList<>();
+
+    public Iterable<ClientConnection> getClientConnections() {
+        return clientConnections;
+    }
+
     private final ServerConfig serverConfig = new ServerConfig();
     private ChannelInitializer<SocketChannel> channelInitializer = new ChannelInitializer<SocketChannel>() {
         @Override
         protected void initChannel(SocketChannel ch) throws Exception {
-
+            ClientConnection cliCon = new ClientConnection(ch, Protocol.Version.MINECRAFT_1_17_1);
+            ch.attr(CONNECTION).set(cliCon);
+            ch.pipeline().addAfter(MINECRAFT_ENCODER, PACKET_ENCODER, new PacketEncoder(cliCon));
+            ch.pipeline().addAfter(MINECRAFT_DECODER, PACKET_DECODER, new PacketDecoder(cliCon));
         }
     };
+
     private ChannelFutureListener channelFutureListener = new ChannelFutureListener() {
         @Override
         public void operationComplete(ChannelFuture future) throws Exception {
-
+            clientConnections.add(future.channel().attr(CONNECTION).get());
         }
     };
+
     @Getter
     private final EventManager eventManager;
 

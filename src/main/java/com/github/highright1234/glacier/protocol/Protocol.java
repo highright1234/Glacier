@@ -1,25 +1,49 @@
 package com.github.highright1234.glacier.protocol;
 
-import java.util.HashMap;
-import java.util.Map;
+import lombok.Getter;
 
+import java.util.*;
+
+@Getter
 public class Protocol {
 
-    public static final Map<Class<? extends AbstractPacket>, Direction> CLASS_DIRECTION_DATA = new HashMap<>();
-    public static final Map<Integer, Map<Integer, Class<? extends AbstractPacket>>> PACKET_DATA = new HashMap<>();
+    public static Type HANDSHAKE = new Type();
+    public static Type STATUS = new Type();
+    public static Type LOGIN = new Type();
+    public static Type PLAY = new Type();
 
-    public static void addPacket(Class<? extends AbstractPacket> clazz, Map<Integer, Integer> mappingPacket,Direction direction) {
-        CLASS_DIRECTION_DATA.put(clazz, direction);
-        for (int protocolVersion : mappingPacket.keySet()) {
-            PACKET_DATA.get(protocolVersion).put(mappingPacket.get(protocolVersion), clazz);
+    public static Set<Integer> SUPPORT_PROTOCOLS = new TreeSet<>();
+
+    public static class Type {
+        public DirectionData TO_CLIENT = new DirectionData();
+        public DirectionData TO_SERVER = new DirectionData();
+
+        public static class DirectionData {
+
+            private final Map<Class<? extends AbstractPacket>, Map<Integer, Integer>> packetIdMap = new HashMap<>();
+            private final Map<Integer, Map<Integer, AbstractPacket>> packetDataMap = new HashMap<>();
+
+            public void addPacket(AbstractPacket packet, Map<Integer, Integer> mappingPacket) {
+                packetIdMap.put(packet.getClass(), mappingPacket);
+                for (int protocolVersion : mappingPacket.keySet()) {
+                    packetDataMap.computeIfAbsent(protocolVersion, k -> new HashMap<>());
+                    packetDataMap.get(protocolVersion).put(mappingPacket.get(protocolVersion), packet);
+                }
+            }
+
+            public Integer getId(int protocolVersion, Class<? extends AbstractPacket> clazz) {
+                return packetIdMap.get(clazz).get(protocolVersion);
+            }
+
+            public AbstractPacket getPacket(int protocolVersion, int id) {
+                return packetDataMap.get(protocolVersion).get(id);
+            }
         }
     }
 
-    public enum Direction {
-        TO_CLIENT, TO_SERVER
-    }
-
     public static class Version {
+        public static final int MINECRAFT_1_7_5 = 4;
+        public static final int MINECRAFT_1_7_10 = 5;
         public static final int MINECRAFT_1_8 = 47;
         public static final int MINECRAFT_1_9 = 107;
         public static final int MINECRAFT_1_9_1 = 108;
