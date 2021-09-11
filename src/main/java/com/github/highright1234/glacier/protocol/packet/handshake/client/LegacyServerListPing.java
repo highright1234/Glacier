@@ -1,13 +1,13 @@
 package com.github.highright1234.glacier.protocol.packet.handshake.client;
 
-import com.github.highright1234.glacier.protocol.AbstractPacket;
+import com.github.highright1234.glacier.protocol.MinecraftPacket;
 import io.netty.buffer.ByteBuf;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 @EqualsAndHashCode(callSuper = true)
 public @Data
-class LegacyServerListPing extends AbstractPacket {
+class LegacyServerListPing extends MinecraftPacket {
 
     private short payload;
 

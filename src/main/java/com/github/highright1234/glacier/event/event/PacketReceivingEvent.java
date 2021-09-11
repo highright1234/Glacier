@@ -3,7 +3,7 @@ package com.github.highright1234.glacier.event.event;
 import com.github.highright1234.glacier.ClientConnection;
 import com.github.highright1234.glacier.event.Cancellable;
 import com.github.highright1234.glacier.event.ClientConnectionEvent;
-import com.github.highright1234.glacier.protocol.AbstractPacket;
+import com.github.highright1234.glacier.protocol.MinecraftPacket;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -15,6 +15,6 @@ public class PacketReceivingEvent extends ClientConnectionEvent implements Cance
     private final ClientConnection clientConnection;
     @Setter
     private boolean cancelled;
-    private final AbstractPacket packet;
+    private final MinecraftPacket packet;
 
 }

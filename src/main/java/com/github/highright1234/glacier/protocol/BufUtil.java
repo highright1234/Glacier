@@ -43,14 +43,14 @@ public class BufUtil {
     }
 
     public static String readString(ByteBuf buf) {
-        return readString0(buf, Short.MAX_VALUE);
+        return readString(buf, Short.MAX_VALUE);
     }
 
     public static String readChat(ByteBuf buf) {
-        return readString0(buf, 262144);
+        return readString(buf, 262144);
     }
 
-    public static String readString0(ByteBuf buf, int maxLength) {
+    public static String readString(ByteBuf buf, int maxLength) {
         int length = readVarInt( buf );
         if ( length > maxLength * 4 ) {
             return null;
@@ -71,9 +71,9 @@ public class BufUtil {
         return new UUID(buf.readLong(), buf.readLong());
     }
 
-    public static Object read(Class<? extends  ByteBufDeSerialization> clazz, ByteBuf buf) throws InstantiationException, IllegalAccessException {
-        ByteBufDeSerialization out = clazz.newInstance();
-        out.deserialization(buf);
+    public static Object read(Class<? extends DataType> clazz, ByteBuf buf) throws InstantiationException, IllegalAccessException {
+        DataType out = clazz.newInstance();
+        out.read(buf);
         return out;
     }
 
@@ -103,14 +103,14 @@ public class BufUtil {
     }
 
     public static void writeString(String value, ByteBuf buf) {
-        writeString0(value, buf, Short.MAX_VALUE);
+        writeString(value, buf, Short.MAX_VALUE);
     }
 
     public static void writeChat(String value, ByteBuf buf) {
-        writeString0(value, buf, 262144);
+        writeString(value, buf, 262144);
     }
 
-    private static void writeString0(String value, ByteBuf buf, int maxLength) {
+    public static void writeString(String value, ByteBuf buf, int maxLength) {
         if (value.length() > maxLength) {
             return;
         }
@@ -123,7 +123,7 @@ public class BufUtil {
         buf.writeLong(value.getLeastSignificantBits());
     }
 
-    public static void write(ByteBufSerialization object, ByteBuf buf) {
-        object.serialization(buf);
+    public static void write(DataType object, ByteBuf buf) {
+        object.write(buf);
     }
 }

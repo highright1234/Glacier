@@ -1,26 +1,25 @@
 package com.github.highright1234.glacier.protocol.datatype;
 
 import com.github.highright1234.glacier.protocol.BufUtil;
-import com.github.highright1234.glacier.protocol.ByteBufDeSerialization;
-import com.github.highright1234.glacier.protocol.ByteBufSerialization;
+import com.github.highright1234.glacier.protocol.DataType;
 import io.netty.buffer.ByteBuf;
 import lombok.Data;
 
-public @Data class EntityMetaData implements ByteBufSerialization, ByteBufDeSerialization {
+public @Data class EntityMetaData implements DataType {
 
     private short index;
     private int type;
     private Object value;
 
     @Override
-    public void serialization(ByteBuf buf) {
+    public void write(ByteBuf buf) {
         buf.writeByte(index);
         buf.writeByte(type);
         // TODO
     }
 
     @Override
-    public void deserialization(ByteBuf buf) {
+    public void read(ByteBuf buf) {
         index = buf.readUnsignedByte();
         switch (BufUtil.readVarInt(buf)) {
             case Type.BYTE:
@@ -52,7 +51,7 @@ public @Data class EntityMetaData implements ByteBufSerialization, ByteBufDeSeri
                 break;
             case Type.POSITION:
                 value = new Position();
-                ((Position) value).serialization(buf);
+                ((Position) value).read(buf);
                 break;
             case Type.OPT_POSITION:
                 value = buf.readByte();

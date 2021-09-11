@@ -1,18 +1,28 @@
 package com.github.highright1234.glacier.protocol;
 
+import com.github.highright1234.glacier.GlacierServer;
 import lombok.Getter;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 @Getter
 public class Protocol {
 
-    public static Type HANDSHAKE = new Type();
-    public static Type STATUS = new Type();
-    public static Type LOGIN = new Type();
-    public static Type PLAY = new Type();
+    private final GlacierServer server;
 
-    public static Set<Integer> SUPPORT_PROTOCOLS = new TreeSet<>();
+    public Protocol() {
+        server = null;
+    }
+
+    public Protocol( @NotNull GlacierServer server ) {
+        this.server = server;
+    }
+
+    public final Type HANDSHAKE = new Type();
+    public final Type STATUS = new Type();
+    public final Type LOGIN = new Type();
+    public final Type PLAY = new Type();
 
     public static class Type {
         public DirectionData TO_CLIENT = new DirectionData();
@@ -20,23 +30,24 @@ public class Protocol {
 
         public static class DirectionData {
 
-            private final Map<Class<? extends AbstractPacket>, Map<Integer, Integer>> packetIdMap = new HashMap<>();
-            private final Map<Integer, Map<Integer, AbstractPacket>> packetDataMap = new HashMap<>();
+            private final Map<Class<? extends MinecraftPacket>, Integer> packetIdMap = new HashMap<>();
+            private final Map<Integer, MinecraftPacket> packetDataMap = new HashMap<>();
 
-            public void addPacket(AbstractPacket packet, Map<Integer, Integer> mappingPacket) {
-                packetIdMap.put(packet.getClass(), mappingPacket);
-                for (int protocolVersion : mappingPacket.keySet()) {
-                    packetDataMap.computeIfAbsent(protocolVersion, k -> new HashMap<>());
-                    packetDataMap.get(protocolVersion).put(mappingPacket.get(protocolVersion), packet);
-                }
+            public void addPacket(MinecraftPacket packet, int id) {
+                packetIdMap.put(packet.getClass(), id);
+                packetDataMap.put(id, packet);
             }
 
-            public Integer getId(int protocolVersion, Class<? extends AbstractPacket> clazz) {
-                return packetIdMap.get(clazz).get(protocolVersion);
+            public Integer getId(Class<? extends MinecraftPacket> clazz) {
+                return packetIdMap.get(clazz);
             }
 
-            public AbstractPacket getPacket(int protocolVersion, int id) {
-                return packetDataMap.get(protocolVersion).get(id);
+            public MinecraftPacket getPacket(int id) {
+                return packetDataMap.get(id);
+            }
+
+            public MinecraftPacket getPacket(Class<? extends MinecraftPacket> clazz) {
+                return packetDataMap.get(getId(clazz));
             }
         }
     }
