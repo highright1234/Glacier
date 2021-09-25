@@ -1,24 +1,15 @@
-package com.github.highright1234.glacier.protocol.packet.status.server;
+package com.github.highright1234.glacier.protocol.packet.status.server
 
-import com.github.highright1234.glacier.protocol.MinecraftPacket;
-import io.netty.buffer.ByteBuf;
-import lombok.*;
+import com.github.highright1234.glacier.protocol.MinecraftPacket
+import io.netty.buffer.ByteBuf
 
-@EqualsAndHashCode(callSuper = true)
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class Pong extends MinecraftPacket {
+data class Pong(var payLoad : Long = 0) : MinecraftPacket() {
 
-    private long payLoad;
-
-    @Override
-    public void write(ByteBuf buf) {
-        buf.writeLong(payLoad);
+    override fun write(buf: ByteBuf) {
+        buf.writeLong(payLoad)
     }
 
-    @Override
-    public void read(ByteBuf buf) {
-        payLoad = buf.readLong();
+    override fun read(buf: ByteBuf) {
+        payLoad = buf.readLong()
     }
 }

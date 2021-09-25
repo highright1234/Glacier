@@ -1,19 +1,19 @@
-package com.github.highright1234.glacier.protocol.packet.status.server
+package com.github.highright1234.glacier.protocol.packet.login.client
 
 import com.github.highright1234.glacier.protocol.MinecraftPacket
 import kotlin.Throws
 import java.lang.Exception
 import io.netty.buffer.ByteBuf
 
-data class SLPResponse(var jsonResponse : String) : MinecraftPacket() {
+data class LoginStart(var userName : String = "") : MinecraftPacket() {
 
-
+    @Throws(Exception::class)
     override fun write(buf: ByteBuf) {
-        writeString(jsonResponse, buf)
+        writeString(userName, buf, 16)
     }
 
     @Throws(Exception::class)
     override fun read(buf: ByteBuf) {
-        jsonResponse = readString(buf)
+        userName = readString(buf, 16)
     }
 }

@@ -1,53 +1,51 @@
-package com.github.highright1234.glacier.protocol.datatype;
+package com.github.highright1234.glacier.protocol.datatype
 
-import com.github.highright1234.glacier.protocol.BufUtil;
-import com.github.highright1234.glacier.protocol.DataType;
-import io.netty.buffer.ByteBuf;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import kotlin.Throws
+import java.lang.Exception
+import io.netty.buffer.ByteBuf
+import com.github.highright1234.glacier.protocol.DataType
+import com.github.highright1234.glacier.protocol.readString
+import com.github.highright1234.glacier.protocol.writeString
+import java.lang.Error
 
-@NoArgsConstructor
-@AllArgsConstructor
-public class Identifier implements DataType {
+class Identifier : DataType {
 
-    private static final String NAME_SPACE_PATTERN = "^[a-z0-9-_]+$";
-    private static final String NAME_PATTERN = "^[a-z0-9.-_\\\\]+$";
-    @Getter
-    private String nameSpace = "minecraft";
-    @Getter
-    private String name = "thing";
+    private var nameSpace = "minecraft"
 
-    public void setNameSpace(String value) throws Exception {
+    private var name = "thing"
+    @Throws(Exception::class)
+    fun setNameSpace(value: String) {
         if (!value.matches(NAME_SPACE_PATTERN)) {
-            throw new Error("namespace is not matched pattern");
+            throw Error("namespace is not matched pattern")
         }
-
-        nameSpace = value;
+        nameSpace = value
     }
 
-    public void setName(String value) {
+    fun setName(value: String) {
         if (!value.matches(NAME_PATTERN)) {
-            throw new Error("namespace is not matched pattern");
+            throw Error("namespace is not matched pattern")
         }
-
-        name = value;
+        name = value
     }
 
-    @Override
-    public void write(ByteBuf buf) {
-        BufUtil.writeString(nameSpace+":"+name, buf);
+    @Throws(Exception::class)
+    override fun write(buf: ByteBuf) {
+        buf.writeString("$nameSpace:$name")
     }
 
-    @Override
-    public void read(ByteBuf buf) {
-        String[] value = BufUtil.readString(buf).split(":");
-        nameSpace = value[0];
-        name = value[1];
+    @Throws(Exception::class)
+    override fun read(buf: ByteBuf) {
+        val value: Array<String> = buf.readString().split(":").toTypedArray()
+        setNameSpace(value[0])
+        setName(value[1])
     }
 
-    @Override
-    public String toString() {
-        return nameSpace+":"+name;
+    override fun toString(): String {
+        return "$nameSpace:$name"
+    }
+
+    companion object {
+        private val NAME_SPACE_PATTERN = Regex("^[a-z0-9-_]+$")
+        private val NAME_PATTERN = Regex("^[a-z0-9.-_\\\\]+$")
     }
 }

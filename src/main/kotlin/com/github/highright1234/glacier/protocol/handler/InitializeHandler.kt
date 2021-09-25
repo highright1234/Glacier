@@ -1,109 +1,95 @@
-package com.github.highright1234.glacier.protocol.handler;
+package com.github.highright1234.glacier.protocol.handler
 
-import com.github.highright1234.glacier.ClientConnection;
-import com.github.highright1234.glacier.protocol.MinecraftPacket;
-import com.github.highright1234.glacier.protocol.packet.handshake.client.HandshakePacket;
-import com.github.highright1234.glacier.protocol.packet.status.client.Ping;
-import com.github.highright1234.glacier.protocol.packet.status.client.SLPRequest;
-import com.github.highright1234.glacier.protocol.packet.status.server.Pong;
-import com.github.highright1234.glacier.protocol.packet.status.server.SLPResponse;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import org.jetbrains.annotations.NotNull;
+import com.github.highright1234.glacier.ClientConnection
+import com.github.highright1234.glacier.protocol.MinecraftPacket
+import kotlin.Throws
+import java.lang.Exception
+import io.netty.channel.ChannelInboundHandlerAdapter
+import io.netty.channel.ChannelHandlerContext
+import com.github.highright1234.glacier.protocol.packet.status.client.Ping
+import com.github.highright1234.glacier.protocol.packet.handshake.client.HandshakePacket
+import com.github.highright1234.glacier.protocol.packet.status.client.SLPRequest
+import com.github.highright1234.glacier.SLPResponseData
+import com.github.highright1234.glacier.event.event.SLPRequestEvent
+import com.github.highright1234.glacier.protocol.packet.status.server.SLPResponse
+import com.google.gson.Gson
+import com.github.highright1234.glacier.protocol.packet.status.server.Pong
+import java.lang.RuntimeException
+import java.lang.IllegalStateException
 
-@EqualsAndHashCode(callSuper = true)
-@Data
-public class InitializeHandler extends ChannelInboundHandlerAdapter {
+data class InitializeHandler(
+    val clientConnection: ClientConnection?,
+    var state : State = State.HANDSHAKE,
+    var isLogin : Boolean = false,
+    var ping : Ping,
+    var isServer : Boolean = clientConnection != null
+) : ChannelInboundHandlerAdapter() {
 
-    private final ClientConnection clientConnection;
-    private State state;
-    private boolean isLogin = false;
-    private final static Exception WRONG_PACKET = new RuntimeException("it's wrong packet");
-    private final static Exception WRONG_NEXT_STATE = new RuntimeException("it's wrong next state!");
-    private final static Exception WRONG_STATE_VALUE = new RuntimeException("wrong state value!");
-    private final static Exception NULL_PING = new IllegalStateException("you did not send the ping");
-    private Ping ping = null;
-
-    public boolean isServer() {
-        return clientConnection != null;
-    }
-
-    public InitializeHandler(@NotNull ClientConnection clientConnection) {
-        this.clientConnection = clientConnection;
-        state = State.HANDSHAKE;
-    }
-
-    public InitializeHandler() {
-        this.clientConnection = null;
-        state = State.LOGIN;
-    }
-
-    @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        if (!(msg instanceof MinecraftPacket)) {
-            ctx.fireChannelRead(msg);
-            return;
+    @Throws(Exception::class)
+    override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
+        if (msg !is MinecraftPacket) {
+            ctx.fireChannelRead(msg)
+            return
         }
         if (clientConnection != null) {
-            switch (state) {
-                case HANDSHAKE:
-                    HandshakePacket packet = (HandshakePacket) msg;
-                    clientConnection.setProtocolVersion(packet.getProtocolVersion());
-                    if (packet.getNextState() == 1) {
-                        state = State.STATUS;
-                    } else if (packet.getNextState() == 2) {
-                        state = State.LOGIN;
-                    } else {
-                        throw WRONG_NEXT_STATE;
+            when (state) {
+                State.HANDSHAKE -> if (msg is HandshakePacket) {
+                    clientConnection.protocolVersion = msg.protocolVersion
+                    state = when (msg.nextState) {
+                        1 -> {
+                            State.STATUS
+                        }
+                        2 -> {
+                            State.LOGIN
+                        }
+                        else -> {
+                            throw WRONG_NEXT_STATE
+                        }
                     }
-                    break;
-                case STATUS:
-                    if (msg instanceof SLPRequest) {
-                        // TODO
-                    } else {
-                        throw WRONG_PACKET;
-                    }
-                    break;
-                case PING:
-                    if (msg instanceof Ping) {
-                        clientConnection.sendPacket(new Pong(ping.getPayLoad()));
-                    } else {
-                        throw WRONG_PACKET;
-                    }
-                    break;
+                }
+                State.STATUS -> if (msg is SLPRequest) {
+                    val response: SLPResponseData = clientConnection.glacierServer.eventManager.callEvent(
+                        SLPRequestEvent(
+                            clientConnection,
+                            clientConnection.glacierServer.slpResponseData
+                        )
+                    ).slpResponseData
+                    clientConnection.sendPacket(SLPResponse(Gson().toJson(response)))
+                } else {
+                    throw WRONG_PACKET
+                }
+                State.PING -> if (msg is Ping) {
+                    clientConnection.sendPacket(Pong(ping.payLoad))
+                } else {
+                    throw WRONG_PACKET
+                }
             }
         } else {
-            switch (state) {
-                case HANDSHAKE:
-                    throw WRONG_STATE_VALUE;
-                case STATUS:
-                    SLPResponse slpResponse = (SLPResponse) msg;
-                    // TODO
-                    break;
-                case PING:
-                    if (ping == null) {
-                        throw NULL_PING;
+            when (state) {
+                State.HANDSHAKE -> throw WRONG_STATE_VALUE
+                State.STATUS -> {
+                }
+                State.PING -> {
+                    val pong = msg as Pong
+                    if (ping.payLoad == pong.payLoad) {
+                        TODO()
                     }
-                    Pong pong = (Pong) msg;
-                    if (ping.getPayLoad() == pong.getPayLoad()) {
-                        // TODO
-                    }
-                    break;
-                case LOGIN:
-                    // TODO
-                    break;
+                }
+                State.LOGIN -> {
+
+                }
             }
         }
     }
 
-    public enum State {
-        HANDSHAKE,
-        STATUS,
-        PING,
-        LOGIN,
-        ENCRYPTION,
-        LOGIN_SUCCESSFUL
+    enum class State {
+        HANDSHAKE, STATUS, PING, LOGIN, ENCRYPTION, LOGIN_SUCCESSFUL
+    }
+
+    companion object {
+        private val WRONG_PACKET: Exception = RuntimeException("it's wrong packet")
+        private val WRONG_NEXT_STATE: Exception = RuntimeException("it's wrong next state!")
+        private val WRONG_STATE_VALUE: Exception = RuntimeException("wrong state value!")
+        private val NULL_PING: Exception = IllegalStateException("you did not send the ping")
     }
 }

@@ -1,20 +1,12 @@
-package com.github.highright1234.glacier.event.event;
+package com.github.highright1234.glacier.event.event
 
-import com.github.highright1234.glacier.ClientConnection;
-import com.github.highright1234.glacier.event.Cancellable;
-import com.github.highright1234.glacier.event.ClientConnectionEvent;
-import com.github.highright1234.glacier.protocol.MinecraftPacket;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
+import com.github.highright1234.glacier.ClientConnection
+import com.github.highright1234.glacier.event.ClientConnectionEvent
+import com.github.highright1234.glacier.event.Cancellable
+import com.github.highright1234.glacier.protocol.MinecraftPacket
 
-@Getter
-@RequiredArgsConstructor
-public class PacketSendingEvent extends ClientConnectionEvent implements Cancellable {
-
-    private final ClientConnection clientConnection;
-    @Setter
-    private boolean cancelled;
-    private final MinecraftPacket packet;
-
-}
+class PacketSendingEvent(
+    override val clientConnection: ClientConnection,
+    val packet: MinecraftPacket,
+    override var isCancelled: Boolean
+) : ClientConnectionEvent(), Cancellable

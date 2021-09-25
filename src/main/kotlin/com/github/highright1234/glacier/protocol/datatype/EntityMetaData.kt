@@ -1,126 +1,98 @@
-package com.github.highright1234.glacier.protocol.datatype;
+package com.github.highright1234.glacier.protocol.datatype
 
-import com.github.highright1234.glacier.protocol.BufUtil;
-import com.github.highright1234.glacier.protocol.DataType;
-import io.netty.buffer.ByteBuf;
-import lombok.Data;
+import kotlin.Throws
+import java.lang.Exception
+import io.netty.buffer.ByteBuf
+import com.github.highright1234.glacier.protocol.BufUtil
+import com.github.highright1234.glacier.protocol.DataType
 
-public @Data class EntityMetaData implements DataType {
-
-    private short index;
-    private int type;
-    private Object value;
-
-    @Override
-    public void write(ByteBuf buf) {
-        buf.writeByte(index);
-        buf.writeByte(type);
+class EntityMetaData : DataType {
+    private var index: Short = 0
+    private val type = 0
+    private var value: Any? = null
+    @Throws(Exception::class)
+    override fun write(buf: ByteBuf) {
+        buf.writeByte(index.toInt())
+        buf.writeByte(type)
         // TODO
     }
 
-    @Override
-    public void read(ByteBuf buf) {
-        index = buf.readUnsignedByte();
-        switch (BufUtil.readVarInt(buf)) {
-            case Type.BYTE:
-                value = buf.readByte();
-                break;
-            case Type.VAR_INT:
-                value = BufUtil.readVarInt(buf);
-                break;
-            case Type.FLOAT:
-                value = buf.readFloat();
-                break;
-            case Type.STRING:
-                value = BufUtil.readString(buf);
-                break;
-            case Type.CHAT:
-                value = BufUtil.readChat(buf);
-                break;
-            case Type.OPT_CHAT:
-                value = buf.readByte();
-                break;
-            case Type.SLOT:
-                // TODO
-                break;
-            case Type.BOOLEAN:
-                value = buf.readBoolean();
-                break;
-            case Type.ROTATION:
-                value = buf.readByte();
-                break;
-            case Type.POSITION:
-                value = new Position();
-                ((Position) value).read(buf);
-                break;
-            case Type.OPT_POSITION:
-                value = buf.readByte();
-                break;
-            case Type.DIRECTION:
-                value = buf.readByte();
-                break;
-            case Type.OPT_UUID:
-                value = buf.readByte();
-                break;
-            case Type.OPT_BLOCK_ID:
-                value = buf.readByte();
-                break;
-            case Type.NBT:
-//                value = ;
-                break;
-            case Type.PARTICLE:
-                value = buf.readByte();
-                break;
-            case Type.VILLAGER_DATA:
-                value = buf.readByte();
-                break;
-            case Type.OPT_VAR_INT:
-                value = buf.readByte();
-                break;
-            case Type.POSE:
-                value = buf.readByte();
-                break;
+    @Throws(Exception::class)
+    override fun read(buf: ByteBuf) {
+        index = buf.readUnsignedByte()
+        when (BufUtil.Companion.readVarInt(buf)) {
+            Type.BYTE -> value = buf.readByte()
+            Type.VAR_INT, Type.DIRECTION, Type.POSE -> value = BufUtil.Companion.readVarInt(buf)
+            Type.FLOAT -> value = buf.readFloat()
+            Type.STRING -> value = BufUtil.readString(buf)
+            Type.CHAT -> value = BufUtil.Companion.readChat(buf)
+            Type.OPT_CHAT -> if (buf.readBoolean()) {
+                value = BufUtil.Companion.readChat(buf)
+            }
+            Type.SLOT -> {
+            }
+            Type.BOOLEAN -> value = buf.readBoolean()
+            Type.ROTATION -> {
+                val rotation = Rotation()
+                rotation.x = buf.readFloat()
+                rotation.y = buf.readFloat()
+                rotation.z = buf.readFloat()
+                value = rotation
+            }
+            Type.POSITION -> {
+                value = Position()
+                (value as Position).read(buf)
+            }
+            Type.OPT_POSITION -> value = BufUtil.Companion.read(Optional(Position()), buf)
+            Type.OPT_UUID -> if (buf.readBoolean()) {
+                value = BufUtil.Companion.readUUID(buf)
+            }
+            Type.OPT_BLOCK_ID, Type.OPT_VAR_INT -> if (buf.readBoolean()) {
+                value = BufUtil.Companion.readVarInt(buf)
+            }
+            Type.NBT -> {
+            }
+            Type.PARTICLE -> value = buf.readByte()
+            Type.VILLAGER_DATA -> value = buf.readByte()
         }
     }
 
-    public static class Type {
-        public static final int BYTE = 0;
-        public static final int VAR_INT = 1;
-        public static final int FLOAT = 2;
-        public static final int STRING = 3;
-        public static final int CHAT = 4;
-        public static final int OPT_CHAT = 5;
-        public static final int SLOT = 6;
-        public static final int BOOLEAN = 7;
-        public static final int ROTATION = 8;
-        public static final int POSITION = 9;
-        public static final int OPT_POSITION = 10;
-        public static final int DIRECTION = 11;
-        public static final int OPT_UUID = 12;
-        public static final int OPT_BLOCK_ID = 13;
-        public static final int NBT = 14;
-        public static final int PARTICLE = 15;
-        public static final int VILLAGER_DATA = 16;
-        public static final int OPT_VAR_INT = 17;
-        public static final int POSE = 18;
+    object Type {
+        const val BYTE = 0
+        const val VAR_INT = 1
+        const val FLOAT = 2
+        const val STRING = 3
+        const val CHAT = 4
+        const val OPT_CHAT = 5
+        const val SLOT = 6
+        const val BOOLEAN = 7
+        const val ROTATION = 8
+        const val POSITION = 9
+        const val OPT_POSITION = 10
+        const val DIRECTION = 11
+        const val OPT_UUID = 12
+        const val OPT_BLOCK_ID = 13
+        const val NBT = 14
+        const val PARTICLE = 15
+        const val VILLAGER_DATA = 16
+        const val OPT_VAR_INT = 17
+        const val POSE = 18
     }
-    public enum Pose {
 
-        STANDING(0),
-        FALL_FLYING(1),
-        SLEEPING(2),
-        SWIMMING(3),
-        SPIN_ATTACK(4),
-        SNEAKING(5),
-        DYING(6);
 
-        private int x;
+    data class Rotation(
+        var x: Float = 0f,
+        var y: Float = 0f,
+        var z: Float = 0f
+    )
 
-        Pose(int x) {
-        }
-
-        public int getValue() {
-            return x;
-        }
+    object Pose {
+        const val STANDING = 0
+        const val FALL_FLYING = 1
+        const val SLEEPING = 2
+        const val SWIMMING = 3
+        const val SPIN_ATTACK = 4
+        const val DYING = 5
+        const val LONG_JUMPING = 6
     }
 }

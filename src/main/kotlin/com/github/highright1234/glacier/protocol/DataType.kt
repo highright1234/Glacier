@@ -1,8 +1,14 @@
-package com.github.highright1234.glacier.protocol;
+package com.github.highright1234.glacier.protocol
 
-import io.netty.buffer.ByteBuf;
+import kotlin.Throws
+import java.lang.Exception
+import io.netty.buffer.ByteBuf
 
-public interface DataType {
-    void write(ByteBuf buf);
-    void read(ByteBuf buf);
+
+interface DataType {
+    @Throws(Exception::class)
+    fun write(buf: ByteBuf)
+
+    @Throws(Exception::class)
+    fun read(buf: ByteBuf)
 }

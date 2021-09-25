@@ -1,32 +1,29 @@
-package com.github.highright1234.glacier.protocol.packet.handshake.client;
+package com.github.highright1234.glacier.protocol.packet.handshake.client
 
-import com.github.highright1234.glacier.protocol.MinecraftPacket;
-import io.netty.buffer.ByteBuf;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import com.github.highright1234.glacier.protocol.MinecraftPacket
+import kotlin.Throws
+import java.lang.Exception
+import io.netty.buffer.ByteBuf
 
-@EqualsAndHashCode(callSuper = true)
-@Data
-public class HandshakePacket extends MinecraftPacket {
+data class HandshakePacket(
+    var protocolVersion : Int = 756,
+    var serverAddress : String = "0.0.0.0",
+    var serverPort : Int = 25565,
+    var nextState : Int = 2
+) : MinecraftPacket() {
 
-    private int protocolVersion = 756;
-    private String serverAddress = "0.0.0.0";
-    private int serverPort = 25565;
-    private int nextState = 2;
-
-    @Override
-    public void write(ByteBuf buf) {
-        writeVarInt(protocolVersion, buf);
-        writeString(serverAddress, buf, 255);
-        buf.writeShort(serverPort);
-        writeVarInt(nextState, buf);
+    override fun write(buf: ByteBuf) {
+        writeVarInt(protocolVersion, buf)
+        writeString(serverAddress, buf, 255)
+        buf.writeShort(serverPort)
+        writeVarInt(nextState, buf)
     }
 
-    @Override
-    public void read(ByteBuf buf) {
-        protocolVersion = readVarInt(buf);
-        serverAddress = readString(buf, 255);
-        serverPort = buf.readUnsignedShort();
-        nextState = readVarInt(buf);
+    @Throws(Exception::class)
+    override fun read(buf: ByteBuf) {
+        protocolVersion = readVarInt(buf)
+        serverAddress = readString(buf, 255)
+        serverPort = buf.readUnsignedShort()
+        nextState = readVarInt(buf)
     }
 }

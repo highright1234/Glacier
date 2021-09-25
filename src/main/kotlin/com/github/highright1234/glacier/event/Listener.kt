@@ -1,4 +1,3 @@
-package com.github.highright1234.glacier.event;
+package com.github.highright1234.glacier.event
 
-public interface Listener {
-}
+interface Listener 

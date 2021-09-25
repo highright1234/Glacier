@@ -1,40 +1,32 @@
-package com.github.highright1234.glacier;
+package com.github.highright1234.glacier
 
-import com.github.highright1234.glacier.protocol.MinecraftPacket;
-import com.github.highright1234.glacier.protocol.Protocol;
-import io.netty.channel.Channel;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
-import org.jetbrains.annotations.NotNull;
+import com.github.highright1234.glacier.protocol.MinecraftPacket
+import com.github.highright1234.glacier.protocol.Protocol
+import com.github.highright1234.glacier.protocol.packet.DisconnectPacket
+import io.netty.channel.Channel
+import net.kyori.adventure.text.Component
 
-@Getter
-@EqualsAndHashCode
-@ToString
-public class ClientConnection {
+data class ClientConnection (
+    val ch: Channel,
+    val protocolType: Protocol.Type,
+    val glacierServer: GlacierServer
+) {
 
-    @NotNull
-    private final Channel ch;
-    @Getter
-    @Setter
-    private int protocolVersion = Protocol.Version.MINECRAFT_1_7_5;
-    @Setter
-    @NotNull
-    private Protocol.Type protocolType;
+    var protocolVersion = Protocol.Version.MINECRAFT_1_7_5
+    var ping = 0
 
-    public ClientConnection(@NotNull Channel ch, @NotNull Protocol.Type protocolType) {
-        this.ch = ch;
-        this.protocolType = protocolType;
-    }
-
-    public void sendPacket(@NotNull MinecraftPacket packet) {
-        if (ch.isActive()) {
-            ch.writeAndFlush(packet);
+    fun sendPacket(packet: MinecraftPacket) {
+        if (ch.isActive) {
+            ch.writeAndFlush(packet)
         }
     }
 
-    public void disconnect() {
-
+    fun disconnect(message: Component) {
+        if (protocolType === glacierServer.getProtocol(protocolVersion).LOGIN ||
+            protocolType === glacierServer.getProtocol(protocolVersion).PLAY
+        ) {
+            sendPacket(DisconnectPacket(message))
+        }
+        ch.disconnect()
     }
 }

@@ -1,36 +1,25 @@
-package com.github.highright1234.glacier.protocol.handler;
+package com.github.highright1234.glacier.protocol.handler
 
-import com.github.highright1234.glacier.protocol.MinecraftPacket;
-import com.github.highright1234.glacier.protocol.BufUtil;
-import com.github.highright1234.glacier.protocol.Protocol;
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.MessageToMessageDecoder;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
+import kotlin.Throws
+import java.lang.Exception
+import io.netty.buffer.ByteBuf
+import com.github.highright1234.glacier.protocol.BufUtil
+import io.netty.channel.ChannelHandlerContext
+import io.netty.handler.codec.MessageToMessageDecoder
+import com.github.highright1234.glacier.protocol.Protocol
 
-import java.util.List;
+data class MinecraftDecoder(var protocolType : Protocol.Type, val isServer : Boolean) : MessageToMessageDecoder<ByteBuf>() {
 
-@AllArgsConstructor
-public class MinecraftDecoder extends MessageToMessageDecoder<ByteBuf> {
-
-    @Getter
-    @Setter
-    private Protocol.Type protocolType;
-
-    private boolean isServer;
-
-    @Override
-    protected void decode(ChannelHandlerContext ctx, ByteBuf msg, List<Object> out) throws Exception {
-        int packetID = BufUtil.readVarInt(msg);
-        Protocol.Type.DirectionData dir = isServer ? protocolType.TO_SERVER : protocolType.TO_CLIENT;
-        MinecraftPacket packet = dir.getPacket(packetID);
-        packet.read(msg);
-        if (msg.isReadable()) {
-            msg.release();
-            return;
+    @Throws(Exception::class)
+    override fun decode(ctx: ChannelHandlerContext, msg: ByteBuf, out: MutableList<Any>) {
+        val packetID: Int = BufUtil.readVarInt(msg)
+        val dir = if (isServer) protocolType.TO_SERVER else protocolType.TO_CLIENT
+        val packet = dir.getPacket(packetID)
+        packet!!.read(msg)
+        if (msg.isReadable) {
+            msg.release()
+            return
         }
-        out.add(packet);
+        out.add(packet)
     }
 }

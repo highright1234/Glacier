@@ -1,20 +1,29 @@
-package com.github.highright1234.glacier.protocol.handler;
+package com.github.highright1234.glacier.protocol.handler
 
-import com.github.highright1234.glacier.EventManager;
-import com.github.highright1234.glacier.protocol.MinecraftPacket;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
-import lombok.RequiredArgsConstructor;
+import com.github.highright1234.glacier.protocol.MinecraftPacket
+import kotlin.Throws
+import java.lang.Exception
+import io.netty.channel.ChannelInboundHandlerAdapter
+import io.netty.channel.ChannelHandlerContext
+import com.github.highright1234.glacier.EventManager
+import com.github.highright1234.glacier.protocol.PipelineUtil
+import com.github.highright1234.glacier.event.event.PacketReceivingEvent
 
-@RequiredArgsConstructor
-public class ReceivingEventHandler extends ChannelInboundHandlerAdapter {
+data class ReceivingEventHandler(val eventManager : EventManager) : ChannelInboundHandlerAdapter() {
 
-    private final EventManager eventManager;
-
-    @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        if (msg instanceof MinecraftPacket) {
-            eventManager.callEvent(msg);
+    @Throws(Exception::class)
+    override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
+        if (msg is MinecraftPacket) {
+            if (!eventManager.callEvent(
+                    PacketReceivingEvent(
+                        PipelineUtil.getClientConnection(ctx.channel()),
+                        msg
+                    )
+                )
+                    .isCancelled
+            ) {
+                ctx.fireChannelRead(msg)
+            }
         }
     }
 }

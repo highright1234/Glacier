@@ -1,12 +1,8 @@
-package com.github.highright1234.glacier.event.event;
+package com.github.highright1234.glacier.event.event
 
-import com.github.highright1234.glacier.ClientConnection;
-import com.github.highright1234.glacier.event.ClientConnectionEvent;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import com.github.highright1234.glacier.ClientConnection
+import com.github.highright1234.glacier.event.ClientConnectionEvent
 
-@RequiredArgsConstructor
-public class ClientConnectedEvent extends ClientConnectionEvent {
-    @Getter
-    private final ClientConnection clientConnection;
-}
+data class ClientConnectedEvent(
+    override val clientConnection: ClientConnection
+) : ClientConnectionEvent()

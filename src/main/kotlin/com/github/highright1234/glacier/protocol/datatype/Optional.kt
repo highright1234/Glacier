@@ -1,54 +1,45 @@
-package com.github.highright1234.glacier.protocol.datatype;
+package com.github.highright1234.glacier.protocol.datatype
 
-import com.github.highright1234.glacier.protocol.DataType;
-import com.github.highright1234.glacier.protocol.MinecraftPacket;
-import io.netty.buffer.ByteBuf;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.github.highright1234.glacier.protocol.DataType
+import kotlin.Throws
+import java.lang.Exception
+import io.netty.buffer.ByteBuf
 
-import java.util.Objects;
+class Optional<T : DataType?>(defaultPacket: T) : DataType {
+    private val packet: T?
+    @Throws(Exception::class)
+    override fun write(buf: ByteBuf) {
+        if (packet == null) {
+            buf.writeBoolean(false)
+        } else {
+            buf.writeBoolean(true)
+            packet.write(buf)
+        }
+    }
 
-@EqualsAndHashCode
-@NoArgsConstructor
-@Data
-public class Optional<T extends DataType> implements DataType {
+    @Throws(Exception::class)
+    override fun read(buf: ByteBuf) {
+        if (buf.readBoolean()) {
+            packet!!.read(buf)
+        }
+    }
 
-    @Nullable
-    private MinecraftPacket packet;
+    @Throws(Exception::class)
+    fun read(buf: ByteBuf, defaultPacket: T) {
+        if (buf.readBoolean()) {
+            defaultPacket!!.read(buf)
+        }
+    }
 
-    private static final Exception NULL_PACKET = new NullPointerException("packet must be not null if you use the read");
+    companion object {
+        private val NULL_PACKET: Exception = NullPointerException("packet must be not null if you use the read")
+    }
 
     /**
      * use this if you are going to use read
      * @param defaultPacket default packet
      */
-    public Optional(@NotNull MinecraftPacket defaultPacket) {
-        this.packet = defaultPacket;
-    }
-
-    @Override
-    public void write(ByteBuf buf) {
-        if (packet == null) {
-            buf.writeBoolean(false);
-        } else {
-            buf.writeBoolean(true);
-            packet.write(buf);
-        }
-    }
-
-    @Override
-    public void read(ByteBuf buf) {
-        if (buf.readBoolean()) {
-            Objects.requireNonNull(packet).read(buf);
-        }
-    }
-
-    public void read(ByteBuf buf, @NotNull T defaultPacket) {
-        if (buf.readBoolean()) {
-            defaultPacket.read(buf);
-        }
+    init {
+        packet = defaultPacket
     }
 }

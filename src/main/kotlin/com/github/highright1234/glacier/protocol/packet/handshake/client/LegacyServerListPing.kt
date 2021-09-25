@@ -1,23 +1,15 @@
-package com.github.highright1234.glacier.protocol.packet.handshake.client;
+package com.github.highright1234.glacier.protocol.packet.handshake.client
 
-import com.github.highright1234.glacier.protocol.MinecraftPacket;
-import io.netty.buffer.ByteBuf;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import com.github.highright1234.glacier.protocol.MinecraftPacket
+import io.netty.buffer.ByteBuf
 
-@EqualsAndHashCode(callSuper = true)
-public @Data
-class LegacyServerListPing extends MinecraftPacket {
+data class LegacyServerListPing(var payload : Short) : MinecraftPacket() {
 
-    private short payload;
-
-    @Override
-    public void write(ByteBuf buf) {
-        buf.writeByte(payload);
+    override fun write(buf: ByteBuf) {
+        buf.writeByte(payload.toInt())
     }
 
-    @Override
-    public void read(ByteBuf buf) {
-        payload = buf.readUnsignedByte();
+    override fun read(buf: ByteBuf) {
+        payload = buf.readUnsignedByte()
     }
 }

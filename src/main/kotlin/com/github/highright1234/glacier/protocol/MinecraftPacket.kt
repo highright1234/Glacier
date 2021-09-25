@@ -1,11 +1,12 @@
-package com.github.highright1234.glacier.protocol;
+package com.github.highright1234.glacier.protocol
 
-import io.netty.buffer.ByteBuf;
+import kotlin.Throws
+import java.lang.Exception
+import io.netty.buffer.ByteBuf
 
-public abstract class MinecraftPacket extends BufUtil {
-
-    public abstract void write(ByteBuf buf);
-
-    public abstract void read(ByteBuf buf);
-
+abstract class MinecraftPacket : BufUtil() {
+    @Throws(Exception::class)
+    abstract fun write(buf: ByteBuf)
+    @Throws(Exception::class)
+    abstract fun read(buf: ByteBuf)
 }

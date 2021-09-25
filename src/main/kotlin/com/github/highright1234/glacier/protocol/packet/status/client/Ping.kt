@@ -1,23 +1,15 @@
-package com.github.highright1234.glacier.protocol.packet.status.client;
+package com.github.highright1234.glacier.protocol.packet.status.client
 
-import com.github.highright1234.glacier.protocol.MinecraftPacket;
-import io.netty.buffer.ByteBuf;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import com.github.highright1234.glacier.protocol.MinecraftPacket
+import io.netty.buffer.ByteBuf
 
-@EqualsAndHashCode(callSuper = true)
-@Data
-public class Ping extends MinecraftPacket {
+data class Ping(var payLoad: Long = 0) : MinecraftPacket() {
 
-    private long payLoad;
-
-    @Override
-    public void write(ByteBuf buf) {
-        buf.writeLong(payLoad);
+    override fun write(buf: ByteBuf) {
+        buf.writeLong(payLoad)
     }
 
-    @Override
-    public void read(ByteBuf buf) {
-        payLoad = buf.readLong();
+    override fun read(buf: ByteBuf) {
+        payLoad = buf.readLong()
     }
 }

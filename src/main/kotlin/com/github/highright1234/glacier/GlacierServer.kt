@@ -1,99 +1,105 @@
-package com.github.highright1234.glacier;
+package com.github.highright1234.glacier
 
-import com.github.highright1234.glacier.protocol.PipelineUtil;
-import com.github.highright1234.glacier.protocol.handler.MinecraftDecoder;
-import com.github.highright1234.glacier.protocol.handler.MinecraftEncoder;
-import com.github.highright1234.glacier.protocol.Protocol;
-import com.github.highright1234.glacier.protocol.handler.ReceivingEventHandler;
-import com.github.highright1234.glacier.protocol.handler.SendingEventHandler;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.*;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
-import lombok.*;
+import java.net.SocketAddress
+import java.net.InetSocketAddress
+import io.netty.channel.EventLoopGroup
+import java.util.TreeSet
+import java.util.HashMap
+import io.netty.channel.ChannelInitializer
+import kotlin.Throws
+import java.lang.Exception
+import com.github.highright1234.glacier.protocol.PipelineUtil
+import com.github.highright1234.glacier.protocol.handler.MinecraftEncoder
+import com.github.highright1234.glacier.protocol.handler.MinecraftDecoder
+import com.github.highright1234.glacier.protocol.handler.ReceivingEventHandler
+import com.github.highright1234.glacier.protocol.handler.SendingEventHandler
+import io.netty.channel.ChannelFutureListener
+import com.github.highright1234.glacier.event.Listener
+import com.github.highright1234.glacier.protocol.Protocol
+import io.netty.bootstrap.ServerBootstrap
+import io.netty.channel.socket.nio.NioServerSocketChannel
+import io.netty.channel.ChannelOption
+import io.netty.channel.nio.NioEventLoopGroup
+import com.google.common.util.concurrent.ThreadFactoryBuilder
+import io.netty.channel.socket.SocketChannel
+import java.util.ArrayList
 
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.util.*;
+class GlacierServer {
 
-public class GlacierServer {
+    val slpResponseData = SLPResponseData()
 
-    private final EventLoopGroup bossGroup, workerGroup;
+    private var address: SocketAddress = InetSocketAddress("0.0.0.0", 25565)
 
-    private final List<ClientConnection> clientConnections = new ArrayList<>();
-
-    public Iterable<ClientConnection> getClientConnections() {
-        return clientConnections;
+    var serverConnectTimeout: Long = 5000
+    private val bossGroup: EventLoopGroup
+    private val workerGroup: EventLoopGroup
+    private val clientConnections: MutableList<ClientConnection> = ArrayList()
+    fun getClientConnections(): Iterable<ClientConnection> {
+        return clientConnections
     }
 
-    @Getter
-    private final Set<Integer> supportProtocols = new TreeSet<>();
-
-    @Getter
-    private final ServerConfig serverConfig = new ServerConfig();
-
-    private final Map<Integer, Protocol> protocols = new HashMap<>();
-
-    public Protocol getProtocol(int protocolVersion) {
-        protocols.computeIfAbsent(protocolVersion, k -> protocols.put(protocolVersion, new Protocol()));
-        return protocols.get(protocolVersion);
+    val supportProtocols: Set<Int> = TreeSet()
+    private val protocols: MutableMap<Int, Protocol?> = HashMap()
+    fun getProtocol(protocolVersion: Int): Protocol {
+        protocols.computeIfAbsent(protocolVersion) { k: Int? -> protocols.put(protocolVersion, Protocol()) }
+        return protocols[protocolVersion]!!
     }
 
-    @Getter
-    @Setter
-    private ChannelInitializer<SocketChannel> channelInitializer = new ChannelInitializer<SocketChannel>() {
-        @Override
-        protected void initChannel(SocketChannel ch) throws Exception {
-            Protocol.Type handshake = getProtocol(Protocol.Version.MINECRAFT_1_7_5).HANDSHAKE;
-            ClientConnection cliCon = new ClientConnection(ch, handshake);
-            ch.attr(PipelineUtil.CONNECTION).set(cliCon);
-            ch.pipeline().addAfter(PipelineUtil.MINECRAFT_ENCODER, PipelineUtil.PACKET_ENCODER, new MinecraftEncoder(handshake, true));
-            ch.pipeline().addAfter(PipelineUtil.MINECRAFT_DECODER, PipelineUtil.PACKET_DECODER, new MinecraftDecoder(handshake, true));
-            ch.pipeline().addLast(PipelineUtil.RECEIVING_EVENT_CALLER, new ReceivingEventHandler(eventManager));
-            ch.pipeline().addFirst(PipelineUtil.SENDING_EVENT_CALLER, new SendingEventHandler(eventManager));
+    var channelInitializer: ChannelInitializer<SocketChannel> = object : ChannelInitializer<SocketChannel>() {
+        @Throws(Exception::class)
+        override fun initChannel(ch: SocketChannel) {
+            val handshake = getProtocol(Protocol.Version.MINECRAFT_1_7_5).HANDSHAKE
+            val cliCon = ClientConnection(ch, handshake, this@GlacierServer)
+            ch.attr(PipelineUtil.CONNECTION).set(cliCon)
+            ch.pipeline().addAfter(
+                PipelineUtil.MINECRAFT_ENCODER,
+                PipelineUtil.PACKET_ENCODER,
+                MinecraftEncoder(handshake, true)
+            )
+            ch.pipeline().addAfter(
+                PipelineUtil.MINECRAFT_DECODER,
+                PipelineUtil.PACKET_DECODER,
+                MinecraftDecoder(handshake, true)
+            )
+            ch.pipeline().addLast(PipelineUtil.RECEIVING_EVENT_CALLER, ReceivingEventHandler(eventManager))
+            ch.pipeline().addFirst(PipelineUtil.SENDING_EVENT_CALLER, SendingEventHandler(eventManager))
         }
-    };
-
-    @Getter
-    @Setter
-    private ChannelFutureListener channelFutureListener = new ChannelFutureListener() {
-        @Override
-        public void operationComplete(ChannelFuture future) throws Exception {
-            clientConnections.add(future.channel().attr(PipelineUtil.CONNECTION).get());
-        }
-    };
-
-    @Getter
-    private final EventManager eventManager = new EventManager();
-
-    public GlacierServer() {
-        bossGroup = new NioEventLoopGroup( 0,
-                new ThreadFactoryBuilder().setNameFormat("Netty IO Thread #%1$d").build());
-        workerGroup = new NioEventLoopGroup( 0,
-                new ThreadFactoryBuilder().setNameFormat("Netty IO Thread #%1$d").build());
     }
 
-    public void start() {
-        new ServerBootstrap()
-                .channel(NioServerSocketChannel.class)
-                .option( ChannelOption.SO_REUSEADDR, true ) // TODO: Move this elsewhere!
-                .childHandler( channelInitializer )
-                .group( bossGroup , workerGroup )
-                .localAddress( serverConfig.getAddress() )
-                .bind().addListener( channelFutureListener );
+    val channelFutureListener =
+        ChannelFutureListener { future -> clientConnections.add(future.channel().attr(PipelineUtil.CONNECTION).get()) }
+
+    val eventManager = EventManager()
+
+    fun address(socketAddress: SocketAddress): GlacierServer {
+        address = socketAddress
+        return this
     }
 
-    @AllArgsConstructor
-    @NoArgsConstructor
-    @Data
-    public static class ServerConfig {
+    fun addListener(listener: Listener?): GlacierServer {
+        eventManager.registerListener(listener!!)
+        return this
+    }
 
-        private String motd = "a Glacier server";
-        private int maxPlayerCount = 20;
-        private SocketAddress address = new InetSocketAddress("0.0.0.0", 25565);
-        private long serverConnectTimeout = 5000;
+    fun start() {
+        ServerBootstrap()
+            .channel(NioServerSocketChannel::class.java)
+            .option(ChannelOption.TCP_NODELAY, true)
+            .option(ChannelOption.SO_REUSEADDR, true)
+            .childHandler(channelInitializer)
+            .group(bossGroup, workerGroup)
+            .localAddress(address)
+            .bind().addListener(channelFutureListener)
+    }
 
+    init {
+        bossGroup = NioEventLoopGroup(
+            0,
+            ThreadFactoryBuilder().setNameFormat("Glacier Server Boss Group IO Thread \$d").build()
+        )
+        workerGroup = NioEventLoopGroup(
+            0,
+            ThreadFactoryBuilder().setNameFormat("Glacier Server Worker Group IO Thread \$d").build()
+        )
     }
 }
