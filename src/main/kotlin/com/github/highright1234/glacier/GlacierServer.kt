@@ -1,5 +1,6 @@
 package com.github.highright1234.glacier
 
+import com.github.highright1234.glacier.event.EventManager
 import java.net.SocketAddress
 import java.net.InetSocketAddress
 import io.netty.channel.EventLoopGroup
@@ -27,19 +28,33 @@ import java.util.ArrayList
 class GlacierServer {
 
     val slpResponseData = SLPResponseData()
+    var onlineMode = false
+
+    fun onlineMode(value : Boolean) : GlacierServer {
+        onlineMode = value
+        return this
+    }
 
     private var address: SocketAddress = InetSocketAddress("0.0.0.0", 25565)
 
-    var serverConnectTimeout: Long = 5000
+    var connectionTimeout: Long = 5000
+
+    fun connectionTimeout(value : Long) : GlacierServer {
+        connectionTimeout = value
+        return this
+    }
+
     private val bossGroup: EventLoopGroup
     private val workerGroup: EventLoopGroup
     private val clientConnections: MutableList<ClientConnection> = ArrayList()
+
     fun getClientConnections(): Iterable<ClientConnection> {
         return clientConnections
     }
 
     val supportProtocols: Set<Int> = TreeSet()
     private val protocols: MutableMap<Int, Protocol?> = HashMap()
+
     fun getProtocol(protocolVersion: Int): Protocol {
         protocols.computeIfAbsent(protocolVersion) { k: Int? -> protocols.put(protocolVersion, Protocol()) }
         return protocols[protocolVersion]!!

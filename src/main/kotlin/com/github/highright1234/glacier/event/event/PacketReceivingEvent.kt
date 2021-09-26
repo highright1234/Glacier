@@ -7,6 +7,6 @@ import com.github.highright1234.glacier.protocol.MinecraftPacket
 
 data class PacketReceivingEvent(
     override val clientConnection: ClientConnection,
-    override var isCancelled: Boolean,
-    var packet: MinecraftPacket
+    var packet: MinecraftPacket,
+    override var isCancelled: Boolean = false
 ) : ClientConnectionEvent(), Cancellable

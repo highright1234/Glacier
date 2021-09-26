@@ -4,12 +4,12 @@ import kotlin.Throws
 import java.lang.Exception
 import io.netty.buffer.ByteBuf
 import java.util.UUID
-import java.lang.RuntimeException
 import com.github.highright1234.glacier.protocol.datatype.Identifier
 import com.google.common.base.Charsets
 import kotlin.jvm.JvmOverloads
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer
 import net.kyori.adventure.text.Component
+import kotlin.RuntimeException
 import kotlin.experimental.and
 
 fun ByteBuf.writeVarInt(value : Int) {
@@ -101,6 +101,7 @@ open class BufUtil {
             } while (read.toInt() and 128 != 0)
             return result
         }
+
         @JvmStatic
         fun readVarLong(buf: ByteBuf): Long {
             var numRead = 0
@@ -117,6 +118,7 @@ open class BufUtil {
             } while (read.toInt() and 128 != 0)
             return result
         }
+
         @JvmStatic
         @Throws(Exception::class)
         fun readIdentifier(buf: ByteBuf): Identifier {
@@ -124,6 +126,7 @@ open class BufUtil {
             identifier.read(buf)
             return identifier
         }
+
         @JvmStatic
         @JvmOverloads
         @Throws(Exception::class)
@@ -140,21 +143,31 @@ open class BufUtil {
             }
             return s
         }
+
         @JvmStatic
         @Throws(Exception::class)
         fun readChat(buf: ByteBuf): Component {
             return GsonComponentSerializer.gson().deserialize(readString(buf, 262144))
         }
+
         @JvmStatic
         fun readUUID(buf: ByteBuf): UUID {
             return UUID(buf.readLong(), buf.readLong())
         }
+
         @JvmStatic
         @Throws(Exception::class)
-        fun read(out: DataType, buf: ByteBuf): Any {
-            out.read(buf)
-            return out
+        fun read(value: Any, buf: ByteBuf): Any {
+            return when(value) {
+                is DataType -> value.read(buf)
+                is String -> buf.readString()
+                is Component -> buf.readChat()
+                is UUID -> buf.readUUID()
+                is Number -> throw RuntimeException("write isn't support number")
+                else -> throw RuntimeException("unsupported type")
+            }
         }
+
         @JvmStatic
         fun writeVarInt(value: Int, buf: ByteBuf) {
             var value = value
@@ -168,6 +181,7 @@ open class BufUtil {
                 value = value ushr 7
             }
         }
+
         @JvmStatic
         fun writeVarLong(value: Long, buf: ByteBuf) {
             var value = value
@@ -181,15 +195,18 @@ open class BufUtil {
                 value = value ushr 7
             }
         }
+
         @JvmStatic
         fun writeChat(component: Component?, buf: ByteBuf) {
             writeString(GsonComponentSerializer.gson().serialize(component!!), buf, 262144)
         }
+
         @JvmStatic
         @Throws(Exception::class)
         fun writeIdentifier(value: Identifier?, buf: ByteBuf) {
             value!!.write(buf)
         }
+
         @JvmStatic
         @JvmOverloads
         fun writeString(value: String?, buf: ByteBuf, maxLength: Int = Short.MAX_VALUE.toInt()) {
@@ -199,15 +216,24 @@ open class BufUtil {
             writeVarInt(value.length, buf)
             buf.writeBytes(value.toByteArray())
         }
+
         @JvmStatic
         fun writeUUID(value: UUID, buf: ByteBuf) {
             buf.writeLong(value.mostSignificantBits)
             buf.writeLong(value.leastSignificantBits)
         }
+
         @JvmStatic
         @Throws(Exception::class)
-        fun write(`object`: DataType, buf: ByteBuf) {
-            `object`.write(buf)
+        fun write(value : Any, buf: ByteBuf) {
+            when(value) {
+                is DataType -> value.write(buf)
+                is String -> buf.writeString(value)
+                is Component -> buf.writeChat(value)
+                is UUID -> buf.writeUUID(value)
+                is Number -> throw RuntimeException("write isn't support number")
+                else -> throw RuntimeException("unsupported type")
+            }
         }
     }
 }

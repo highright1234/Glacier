@@ -5,7 +5,7 @@ import kotlin.Throws
 import java.lang.Exception
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelOutboundHandlerAdapter
-import com.github.highright1234.glacier.EventManager
+import com.github.highright1234.glacier.event.EventManager
 import io.netty.channel.ChannelPromise
 import com.github.highright1234.glacier.event.event.PacketSendingEvent
 import com.github.highright1234.glacier.protocol.PipelineUtil
@@ -15,11 +15,13 @@ data class SendingEventHandler(val eventManager : EventManager) : ChannelOutboun
     @Throws(Exception::class)
     override fun write(ctx: ChannelHandlerContext, msg: Any, promise: ChannelPromise) {
         if (msg is MinecraftPacket) {
-            eventManager.callEvent(
-                PacketSendingEvent(
-                    PipelineUtil.getClientConnection(ctx.channel()), msg
+            PipelineUtil.getClientConnection(ctx.channel())?.let {
+                PacketSendingEvent(it, msg)
+            }?.let {
+                eventManager.callEvent(
+                    it
                 )
-            )
+            }
         }
     }
 }

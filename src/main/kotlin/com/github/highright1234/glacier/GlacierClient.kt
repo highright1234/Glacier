@@ -1,5 +1,6 @@
 package com.github.highright1234.glacier
 
+import com.github.highright1234.glacier.event.EventManager
 import java.net.SocketAddress
 import java.net.InetSocketAddress
 import io.netty.channel.ChannelInitializer
@@ -22,17 +23,31 @@ import io.netty.channel.socket.SocketChannel
 
 class GlacierClient {
 
+    var userName = "HighRight"
+    var password = ""
+
+    fun account(userName : String, password : String = "") : GlacierClient {
+        this.userName = userName
+        this.password = password
+        return this
+    }
+
     var address: SocketAddress = InetSocketAddress("0.0.0.0", 25565)
 
-    val connectTimeout: Long = 5000
+    var connectionTimeout: Long = 5000
+
+    fun connectionTimeout(value : Long) : GlacierClient {
+        connectionTimeout = value
+        return this
+    }
 
     var protocol: Protocol? = null
 
     var version = 0
 
-    val ping = 0
+    var ping = 0
 
-    private val channelInitializer: ChannelInitializer<SocketChannel> = object : ChannelInitializer<SocketChannel>() {
+    private var channelInitializer: ChannelInitializer<SocketChannel> = object : ChannelInitializer<SocketChannel>() {
         @Throws(Exception::class)
         override fun initChannel(ch: SocketChannel) {
             val handshake = protocol!!.HANDSHAKE
@@ -51,7 +66,7 @@ class GlacierClient {
         }
     }
 
-    val channelFutureListener = ChannelFutureListener {
+    var channelFutureListener = ChannelFutureListener {
         // TODO
     }
 

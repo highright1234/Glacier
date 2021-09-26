@@ -1,8 +1,5 @@
-package com.github.highright1234.glacier
+package com.github.highright1234.glacier.event
 
-import com.github.highright1234.glacier.event.Event
-import com.github.highright1234.glacier.event.EventHandler
-import com.github.highright1234.glacier.event.Listener
 import java.util.HashMap
 import java.lang.Error
 import java.util.HashSet

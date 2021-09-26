@@ -10,6 +10,7 @@ data class LoginSuccess(
     var uuid: UUID = UUID(0, 0),
     var userName: String = ""
 ) : MinecraftPacket() {
+
     @Throws(Exception::class)
     override fun write(buf: ByteBuf) {
         // it is not mistake

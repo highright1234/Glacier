@@ -4,26 +4,25 @@ import com.github.highright1234.glacier.protocol.MinecraftPacket
 import kotlin.Throws
 import java.lang.Exception
 import io.netty.buffer.ByteBuf
-import com.github.highright1234.glacier.protocol.BufUtil
-import com.github.highright1234.glacier.protocol.datatype.Identifier
+import com.github.highright1234.glacier.protocol.readString
+import com.github.highright1234.glacier.protocol.writeString
 
 class PluginMessagePacket(
-    var channel : Identifier = Identifier(),
+    var channel : String,
     var data : ByteArray = ByteArray(0)
 ) : MinecraftPacket() {
 
     @Throws(Exception::class)
     override fun write(buf: ByteBuf) {
-        writeIdentifier(channel, buf)
+        buf.writeString(channel)
         buf.writeShort(data.size)
         buf.writeBytes(data)
     }
 
     @Throws(Exception::class)
     override fun read(buf: ByteBuf) {
-        channel = Identifier()
-        channel.read(buf)
+        channel = buf.readString()
         val length = buf.readShort()
-        buf.readBytes(length.toInt())
+        data = buf.readBytes(length.toInt()).array()
     }
 }

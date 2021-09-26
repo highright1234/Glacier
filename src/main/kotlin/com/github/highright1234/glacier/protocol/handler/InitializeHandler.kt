@@ -10,7 +10,7 @@ import com.github.highright1234.glacier.protocol.packet.status.client.Ping
 import com.github.highright1234.glacier.protocol.packet.handshake.client.HandshakePacket
 import com.github.highright1234.glacier.protocol.packet.status.client.SLPRequest
 import com.github.highright1234.glacier.SLPResponseData
-import com.github.highright1234.glacier.event.event.SLPRequestEvent
+import com.github.highright1234.glacier.event.event.server.SLPRequestEvent
 import com.github.highright1234.glacier.protocol.packet.status.server.SLPResponse
 import com.google.gson.Gson
 import com.github.highright1234.glacier.protocol.packet.status.server.Pong

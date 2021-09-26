@@ -7,12 +7,14 @@ import io.netty.buffer.ByteBuf
 import com.github.highright1234.glacier.protocol.DataType
 import com.github.highright1234.glacier.protocol.and
 
-class ClientSettings : MinecraftPacket() {
-    private var locale: String? = ""
-    private var viewDistance: Byte = 0
-    private var chatMode: Byte = 0
-    private var chatColors = false
-    private val displayedSkinParts = DisplayedSkinParts()
+data class ClientSetting(
+    var locale: String? = "",
+    var viewDistance: Byte = 0,
+    var chatMode: Byte = 0,
+    var chatColors: Boolean = false,
+    var displayedSkinParts: DisplayedSkinParts = DisplayedSkinParts()
+) : MinecraftPacket() {
+
     @Throws(Exception::class)
     override fun write(buf: ByteBuf) {
         writeString(locale, buf)
@@ -32,7 +34,7 @@ class ClientSettings : MinecraftPacket() {
     }
 
     data class DisplayedSkinParts(
-        var cape : Boolean= false,
+        var cape : Boolean = false,
         var jacket: Boolean = false,
         var sleeve: Boolean = false,
         var rightSleeve: Boolean = false,
