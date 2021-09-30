@@ -2,6 +2,7 @@
 plugins {
     java
     kotlin("jvm") version "1.5.10"
+    `maven-publish`
 }
 
 group = "com.github.highright1234"
