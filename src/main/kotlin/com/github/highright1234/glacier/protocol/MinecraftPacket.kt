@@ -6,7 +6,7 @@ import io.netty.buffer.ByteBuf
 
 abstract class MinecraftPacket : BufUtil() {
     @Throws(Exception::class)
-    abstract fun write(buf: ByteBuf)
+    abstract fun write(buf: ByteBuf, version : Int)
     @Throws(Exception::class)
-    abstract fun read(buf: ByteBuf)
+    abstract fun read(buf: ByteBuf, version : Int)
 }

@@ -4,7 +4,8 @@ import kotlin.Throws
 import java.lang.Exception
 import io.netty.buffer.ByteBuf
 import java.util.UUID
-import com.github.highright1234.glacier.protocol.datatype.Identifier
+import com.github.highright1234.glacier.packet.datatype.Identifier
+import com.github.highright1234.glacier.packet.datatype.VarInt
 import com.google.common.base.Charsets
 import kotlin.jvm.JvmOverloads
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer
@@ -16,8 +17,12 @@ fun ByteBuf.writeVarInt(value : Int) {
     BufUtil.writeVarInt(value, this)
 }
 
-fun ByteBuf.readVarInt(): Int {
+fun ByteBuf.readVarInt(): VarInt {
     return BufUtil.readVarInt(this)
+}
+
+fun ByteBuf.writeVarInt(value : VarInt) {
+    BufUtil.writeVarInt(value, this)
 }
 
 fun ByteBuf.writeVarLong(value : Long) {
@@ -67,13 +72,13 @@ fun ByteBuf.readUUID() : UUID {
 }
 
 @Throws(Exception::class)
-fun ByteBuf.read(out: DataType): Any {
+fun ByteBuf.read(out: PacketDataType): Any {
     out.read(this)
     return out
 }
 
 @Throws(Exception::class)
-fun ByteBuf.write(out: DataType) {
+fun ByteBuf.write(out: PacketDataType) {
     out.write(this)
 }
 
@@ -84,9 +89,11 @@ infix fun Byte.and(other: Int): Int {
 
 open class BufUtil {
     companion object {
-        @JvmStatic
+
         private val OUT_OF_MAX_LENGTH: Exception = RuntimeException("string length is out of max length")
-        fun readVarInt(buf: ByteBuf): Int {
+
+        @JvmStatic
+        fun readVarInt(buf: ByteBuf): VarInt {
             var numRead = 0
             var result = 0
             var read: Byte
@@ -99,7 +106,7 @@ open class BufUtil {
                     throw RuntimeException("VarInt is too big")
                 }
             } while (read.toInt() and 128 != 0)
-            return result
+            return VarInt(result)
         }
 
         @JvmStatic
@@ -131,7 +138,7 @@ open class BufUtil {
         @JvmOverloads
         @Throws(Exception::class)
         fun readString(buf: ByteBuf, maxLength: Int = Short.MAX_VALUE.toInt()): String {
-            val length = readVarInt(buf)
+            val length = readVarInt(buf).value
             if (length > maxLength * 4) {
                 throw OUT_OF_MAX_LENGTH
             }
@@ -159,7 +166,7 @@ open class BufUtil {
         @Throws(Exception::class)
         fun read(value: Any, buf: ByteBuf): Any {
             return when(value) {
-                is DataType -> value.read(buf)
+                is PacketDataType -> value.read(buf)
                 is String -> buf.readString()
                 is Component -> buf.readChat()
                 is UUID -> buf.readUUID()
@@ -180,6 +187,11 @@ open class BufUtil {
                 // Note: >>> means that the sign bit is shifted with the rest of the number rather than being left alone
                 value = value ushr 7
             }
+        }
+
+        @JvmStatic
+        fun writeVarInt(varInt: VarInt, buf: ByteBuf) {
+            writeVarInt(varInt.value, buf)
         }
 
         @JvmStatic
@@ -227,7 +239,7 @@ open class BufUtil {
         @Throws(Exception::class)
         fun write(value : Any, buf: ByteBuf) {
             when(value) {
-                is DataType -> value.write(buf)
+                is PacketDataType -> value.write(buf)
                 is String -> buf.writeString(value)
                 is Component -> buf.writeChat(value)
                 is UUID -> buf.writeUUID(value)

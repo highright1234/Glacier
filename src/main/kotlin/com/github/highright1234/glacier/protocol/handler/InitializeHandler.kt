@@ -6,14 +6,13 @@ import kotlin.Throws
 import java.lang.Exception
 import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.channel.ChannelHandlerContext
-import com.github.highright1234.glacier.protocol.packet.status.client.Ping
-import com.github.highright1234.glacier.protocol.packet.handshake.client.HandshakePacket
-import com.github.highright1234.glacier.protocol.packet.status.client.SLPRequest
+import com.github.highright1234.glacier.packet.status.client.Ping
+import com.github.highright1234.glacier.packet.handshake.client.HandshakePacket
+import com.github.highright1234.glacier.packet.status.client.SLPRequest
 import com.github.highright1234.glacier.SLPResponseData
 import com.github.highright1234.glacier.event.event.server.SLPRequestEvent
-import com.github.highright1234.glacier.protocol.packet.status.server.SLPResponse
-import com.google.gson.Gson
-import com.github.highright1234.glacier.protocol.packet.status.server.Pong
+import com.github.highright1234.glacier.packet.status.server.SLPResponse
+import com.github.highright1234.glacier.packet.status.server.Pong
 import java.lang.RuntimeException
 import java.lang.IllegalStateException
 
@@ -54,7 +53,7 @@ data class InitializeHandler(
                             clientConnection.glacierServer.slpResponseData
                         )
                     ).slpResponseData
-                    clientConnection.sendPacket(SLPResponse(Gson().toJson(response)))
+                    clientConnection.sendPacket(SLPResponse(response))
                 } else {
                     throw WRONG_PACKET
                 }

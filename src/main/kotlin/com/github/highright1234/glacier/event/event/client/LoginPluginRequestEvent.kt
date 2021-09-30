@@ -1,7 +1,7 @@
 package com.github.highright1234.glacier.event.event.client
 
 import com.github.highright1234.glacier.event.Event
-import com.github.highright1234.glacier.protocol.datatype.Identifier
+import com.github.highright1234.glacier.packet.datatype.Identifier
 
 data class LoginPluginRequestEvent(
     val messageId : Int,

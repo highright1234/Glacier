@@ -6,8 +6,8 @@ import com.github.highright1234.glacier.event.EventManager
 import com.github.highright1234.glacier.event.event.PluginMessageEvent
 import com.github.highright1234.glacier.event.event.server.ClientChatEvent
 import com.github.highright1234.glacier.protocol.MinecraftPacket
-import com.github.highright1234.glacier.protocol.packet.play.PluginMessagePacket
-import com.github.highright1234.glacier.protocol.packet.play.client.*
+import com.github.highright1234.glacier.packet.play.PluginMessagePacket
+import com.github.highright1234.glacier.packet.play.client.*
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
 

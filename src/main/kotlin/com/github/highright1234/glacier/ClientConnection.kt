@@ -2,18 +2,22 @@ package com.github.highright1234.glacier
 
 import com.github.highright1234.glacier.protocol.MinecraftPacket
 import com.github.highright1234.glacier.protocol.Protocol
-import com.github.highright1234.glacier.protocol.packet.DisconnectPacket
-import com.github.highright1234.glacier.protocol.packet.play.PluginMessagePacket
-import com.github.highright1234.glacier.protocol.packet.play.client.ClientSetting
-import com.github.highright1234.glacier.protocol.packet.play.server.ChatMessage
+import com.github.highright1234.glacier.packet.DisconnectPacket
+import com.github.highright1234.glacier.packet.play.PluginMessagePacket
+import com.github.highright1234.glacier.packet.play.client.ClientSetting
+import com.github.highright1234.glacier.packet.play.server.ActionBar
+import com.github.highright1234.glacier.packet.play.server.ServerChatMessage
+import com.github.highright1234.glacier.packet.play.server.PlayerListHeaderAndFooter
 import io.netty.channel.Channel
 import net.kyori.adventure.audience.Audience
+import net.kyori.adventure.audience.MessageType
 import net.kyori.adventure.text.Component
 
 data class ClientConnection (
     val ch: Channel,
-    val protocolType: Protocol.Type,
+    var protocolType: Protocol.Type,
     val glacierServer: GlacierServer,
+    var protocolVersion: Int = Protocol.Version.MINECRAFT_1_7_5
 ) : Audience {
 
     var clientSetting : ClientSetting = ClientSetting()
@@ -25,7 +29,6 @@ data class ClientConnection (
     var yaw : Float = 0F
     var pitch : Float = 0F
 
-    var protocolVersion = Protocol.Version.MINECRAFT_1_7_5
     var ping = 0
 
     fun sendPacket(packet: MinecraftPacket) {
@@ -35,19 +38,37 @@ data class ClientConnection (
     }
 
     fun disconnect(message: Component) {
-        if (protocolType === glacierServer.getProtocol(protocolVersion).LOGIN ||
-            protocolType === glacierServer.getProtocol(protocolVersion).PLAY
-        ) {
+        if (protocolType is Protocol.Login || protocolType is Protocol.Play) {
             sendPacket(DisconnectPacket(message))
         }
         ch.disconnect()
     }
 
-    override fun sendMessage(message: Component) {
-        sendPacket(ChatMessage(message))
-    }
-
     fun sendPluginMessage(channel : String, data : ByteArray) {
         sendPacket(PluginMessagePacket(channel, data))
+    }
+
+    override fun sendMessage(message: Component) {
+        sendPacket(ServerChatMessage(message))
+    }
+
+    override fun sendMessage(message: Component, type: MessageType) {
+        sendPacket(ServerChatMessage(message, if (type == MessageType.CHAT) 0 else 1))
+    }
+
+    override fun sendPlayerListHeader(header: Component) {
+        sendPacket(PlayerListHeaderAndFooter(header, Component.empty()))
+    }
+
+    override fun sendActionBar(message: Component) {
+        sendPacket(ActionBar(message))
+    }
+
+    override fun sendPlayerListFooter(footer: Component) {
+        sendPacket(PlayerListHeaderAndFooter(Component.empty(), footer))
+    }
+
+    override fun sendPlayerListHeaderAndFooter(header: Component, footer: Component) {
+        sendPacket(PlayerListHeaderAndFooter(header, footer))
     }
 }

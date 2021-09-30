@@ -41,7 +41,7 @@ class GlacierClient {
         return this
     }
 
-    var protocol: Protocol? = null
+    var protocol: Protocol = Protocol()
 
     var version = 0
 
@@ -50,16 +50,16 @@ class GlacierClient {
     private var channelInitializer: ChannelInitializer<SocketChannel> = object : ChannelInitializer<SocketChannel>() {
         @Throws(Exception::class)
         override fun initChannel(ch: SocketChannel) {
-            val handshake = protocol!!.HANDSHAKE
+            val handshake = protocol.handshake
             ch.pipeline().addAfter(
                 PipelineUtil.MINECRAFT_ENCODER,
                 PipelineUtil.PACKET_ENCODER,
-                MinecraftEncoder(handshake, true)
+                MinecraftEncoder(handshake.toServer, true)
             )
             ch.pipeline().addAfter(
                 PipelineUtil.MINECRAFT_DECODER,
                 PipelineUtil.PACKET_DECODER,
-                MinecraftDecoder(handshake, true)
+                MinecraftDecoder(handshake.toServer, true)
             )
             ch.pipeline().addLast(PipelineUtil.RECEIVING_EVENT_CALLER, ReceivingEventHandler(eventManager))
             ch.pipeline().addFirst(PipelineUtil.SENDING_EVENT_CALLER, SendingEventHandler(eventManager))

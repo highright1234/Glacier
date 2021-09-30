@@ -5,7 +5,7 @@ import java.lang.Exception
 import io.netty.channel.ChannelInboundHandlerAdapter
 import java.util.HashMap
 import io.netty.channel.ChannelHandlerContext
-import com.github.highright1234.glacier.protocol.packet.play.KeepAlive
+import com.github.highright1234.glacier.packet.play.KeepAlive
 
 data class KeepAliveHandler(
 

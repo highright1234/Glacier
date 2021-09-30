@@ -63,18 +63,18 @@ class GlacierServer {
     var channelInitializer: ChannelInitializer<SocketChannel> = object : ChannelInitializer<SocketChannel>() {
         @Throws(Exception::class)
         override fun initChannel(ch: SocketChannel) {
-            val handshake = getProtocol(Protocol.Version.MINECRAFT_1_7_5).HANDSHAKE
+            val handshake = getProtocol(Protocol.Version.MINECRAFT_1_7_5).handshake
             val cliCon = ClientConnection(ch, handshake, this@GlacierServer)
             ch.attr(PipelineUtil.CONNECTION).set(cliCon)
             ch.pipeline().addAfter(
                 PipelineUtil.MINECRAFT_ENCODER,
                 PipelineUtil.PACKET_ENCODER,
-                MinecraftEncoder(handshake, true)
+                MinecraftEncoder(handshake.toClient, true)
             )
             ch.pipeline().addAfter(
                 PipelineUtil.MINECRAFT_DECODER,
                 PipelineUtil.PACKET_DECODER,
-                MinecraftDecoder(handshake, true)
+                MinecraftDecoder(handshake.toClient, true)
             )
             ch.pipeline().addLast(PipelineUtil.RECEIVING_EVENT_CALLER, ReceivingEventHandler(eventManager))
             ch.pipeline().addFirst(PipelineUtil.SENDING_EVENT_CALLER, SendingEventHandler(eventManager))

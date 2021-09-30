@@ -1,33 +1,42 @@
 package com.github.highright1234.glacier.protocol
 
+import com.github.highright1234.glacier.SLPResponseData
 import java.util.HashMap
 import java.lang.Error
-import com.github.highright1234.glacier.protocol.packet.handshake.client.HandshakePacket
-import com.github.highright1234.glacier.protocol.packet.status.client.SLPRequest
-import com.github.highright1234.glacier.protocol.packet.status.client.Ping
-import com.github.highright1234.glacier.protocol.packet.status.server.SLPResponse
-import com.github.highright1234.glacier.protocol.packet.status.server.Pong
-import com.github.highright1234.glacier.protocol.packet.login.client.LoginStart
-import com.github.highright1234.glacier.protocol.packet.login.server.LoginSuccess
-import com.github.highright1234.glacier.protocol.packet.DisconnectPacket
-import com.github.highright1234.glacier.protocol.packet.login.server.EncryptionRequestPacket
-import com.github.highright1234.glacier.protocol.packet.login.client.EncryptionResponsePacket
-import com.github.highright1234.glacier.protocol.packet.play.PluginMessagePacket
+import com.github.highright1234.glacier.packet.handshake.client.HandshakePacket
+import com.github.highright1234.glacier.packet.status.client.SLPRequest
+import com.github.highright1234.glacier.packet.status.client.Ping
+import com.github.highright1234.glacier.packet.status.server.SLPResponse
+import com.github.highright1234.glacier.packet.status.server.Pong
+import com.github.highright1234.glacier.packet.login.client.LoginStart
+import com.github.highright1234.glacier.packet.login.server.LoginSuccess
+import com.github.highright1234.glacier.packet.DisconnectPacket
+import com.github.highright1234.glacier.packet.login.server.EncryptionRequestPacket
+import com.github.highright1234.glacier.packet.login.client.EncryptionResponsePacket
+import com.github.highright1234.glacier.packet.play.PluginMessagePacket
 
 class Protocol {
 
-    val HANDSHAKE = Type()
-    val STATUS = Type()
-    val LOGIN = Type()
-    val PLAY = Type()
+    val handshake = Handshake()
+    val status = Status()
+    val login = Login()
+    val play = Play()
 
-    class Type {
-        @JvmField
-        var TO_CLIENT = DirectionData()
-        @JvmField
-        var TO_SERVER = DirectionData()
+    class Handshake : Type()
+    class Status : Type()
+    class Login : Type()
+    class Play : Type()
 
-        class DirectionData {
+    abstract class Type {
+        @JvmField
+        var toClient = ToClient()
+        @JvmField
+        var toServer = ToServer()
+
+        class ToClient : DirectionData()
+        class ToServer : DirectionData()
+
+        abstract class DirectionData {
             private val packetIdMap: MutableMap<Class<out MinecraftPacket>, Int?> = HashMap()
             private val packetDataMap: MutableMap<Int?, MinecraftPacket> = HashMap()
             fun addPacket(packet: MinecraftPacket, id: Int) {
@@ -101,18 +110,18 @@ class Protocol {
                 throw Error("version is unsupported version")
             }
             val out = Protocol()
-            out.HANDSHAKE.TO_SERVER.addPacket(HandshakePacket(), 0x00)
-            out.STATUS.TO_SERVER.addPacket(SLPRequest(), 0x00)
-            out.STATUS.TO_SERVER.addPacket(Ping(), 0x00)
-            out.STATUS.TO_CLIENT.addPacket(SLPResponse(""), 0x00)
-            out.STATUS.TO_CLIENT.addPacket(Pong(), 0x00)
-            out.LOGIN.TO_SERVER.addPacket(LoginStart(), 0x00)
-            out.LOGIN.TO_CLIENT.addPacket(LoginSuccess(), 0x02)
-            out.LOGIN.TO_CLIENT.addPacket(DisconnectPacket(), 0x00)
-            out.LOGIN.TO_SERVER.addPacket(EncryptionRequestPacket(), 0x01)
-            out.LOGIN.TO_CLIENT.addPacket(EncryptionResponsePacket(), 0x01)
-            out.PLAY.TO_CLIENT.addPacket(PluginMessagePacket(), 0x3F)
-            out.PLAY.TO_SERVER.addPacket(PluginMessagePacket(), 0x17)
+            out.handshake.toServer.addPacket(HandshakePacket(), 0x00)
+            out.status.toServer.addPacket(SLPRequest(), 0x00)
+            out.status.toServer.addPacket(Ping(), 0x00)
+            out.status.toClient.addPacket(SLPResponse(SLPResponseData()), 0x00)
+            out.status.toClient.addPacket(Pong(), 0x00)
+            out.login.toServer.addPacket(LoginStart(), 0x00)
+            out.login.toClient.addPacket(LoginSuccess(), 0x02)
+            out.login.toClient.addPacket(DisconnectPacket(), 0x00)
+            out.login.toServer.addPacket(EncryptionRequestPacket(), 0x01)
+            out.login.toClient.addPacket(EncryptionResponsePacket(), 0x01)
+            out.play.toClient.addPacket(PluginMessagePacket(), 0x3F)
+            out.play.toServer.addPacket(PluginMessagePacket(), 0x17)
             if (version >= Version.MINECRAFT_1_7_10) {
                 if (version >= Version.MINECRAFT_1_8_9) {
                     if (version >= Version.MINECRAFT_1_9) {
