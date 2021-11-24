@@ -3,10 +3,12 @@ package com.github.highright1234.glacier
 import com.github.highright1234.glacier.protocol.MinecraftPacket
 import com.github.highright1234.glacier.packet.play.PluginMessagePacket
 import com.github.highright1234.glacier.packet.play.client.PlayerChatMessage
+import com.github.highright1234.glacier.protocol.Protocol
+import io.netty.channel.Channel
 import io.netty.channel.ServerChannel
 
 data class ServerConnection(
-    val ch: ServerChannel
+    val ch: ServerChannel,
 ) {
 
     fun disconnect() {

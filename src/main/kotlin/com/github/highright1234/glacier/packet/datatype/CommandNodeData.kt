@@ -19,7 +19,7 @@ data class CommandNodeData(
 
         buf.writeVarInt(commandNodeData.children.size)
         commandNodeData.children.forEach {
-
+            
         }
 
         if (commandNodeData is LiteralCommandNode) {

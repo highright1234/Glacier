@@ -13,7 +13,7 @@ class BrigadierUtil(commandManager: CommandManager) {
     }
 
     fun convert(command : Command) : LiteralArgumentBuilder<CommandSender> {
-        return literal<CommandSender>("foo")
+        return literal<CommandSender>(command.commandName)
             .executes { context ->
                 command.execute(context.source, context.input)
                 1

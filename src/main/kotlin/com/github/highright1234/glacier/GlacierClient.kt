@@ -1,7 +1,6 @@
 package com.github.highright1234.glacier
 
 import com.github.highright1234.glacier.event.EventManager
-import java.net.SocketAddress
 import java.net.InetSocketAddress
 import io.netty.channel.ChannelInitializer
 import kotlin.Throws
@@ -13,13 +12,15 @@ import com.github.highright1234.glacier.protocol.handler.ReceivingEventHandler
 import com.github.highright1234.glacier.protocol.handler.SendingEventHandler
 import io.netty.channel.ChannelFutureListener
 import com.github.highright1234.glacier.event.Listener
+import com.github.highright1234.glacier.packet.handshake.client.HandshakePacket
 import com.github.highright1234.glacier.protocol.Protocol
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.channel.EventLoopGroup
 import io.netty.channel.nio.NioEventLoopGroup
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import io.netty.bootstrap.Bootstrap
-import io.netty.channel.socket.SocketChannel
+import io.netty.channel.Channel
+import io.netty.channel.socket.ServerSocketChannel
 
 class GlacierClient {
 
@@ -32,7 +33,14 @@ class GlacierClient {
         return this
     }
 
-    var address: SocketAddress = InetSocketAddress("0.0.0.0", 25565)
+    var isLogin = true
+
+    fun login(value : Boolean) : GlacierClient {
+        isLogin = value
+        return this
+    }
+
+    var address = InetSocketAddress("0.0.0.0", 25565)
 
     var connectionTimeout: Long = 5000
 
@@ -47,9 +55,14 @@ class GlacierClient {
 
     var ping = 0
 
-    private var channelInitializer: ChannelInitializer<SocketChannel> = object : ChannelInitializer<SocketChannel>() {
+    val channel : Channel
+        get() = clientChannel
+    private lateinit var clientChannel : Channel
+
+    private var channelInitializer: ChannelInitializer<ServerSocketChannel> =
+        object : ChannelInitializer<ServerSocketChannel>() {
         @Throws(Exception::class)
-        override fun initChannel(ch: SocketChannel) {
+        override fun initChannel(ch: ServerSocketChannel) {
             val handshake = protocol.handshake
             ch.pipeline().addAfter(
                 PipelineUtil.MINECRAFT_ENCODER,
@@ -61,13 +74,26 @@ class GlacierClient {
                 PipelineUtil.PACKET_DECODER,
                 MinecraftDecoder(handshake.toServer, true)
             )
+            val serverConnection = ServerConnection(ch)
+            ch.attr(PipelineUtil.SERVER_CONNECTION).set(serverConnection)
+            ch.attr(PipelineUtil.GLACIER_CLIENT).set(this@GlacierClient)
+
             ch.pipeline().addLast(PipelineUtil.RECEIVING_EVENT_CALLER, ReceivingEventHandler(eventManager))
             ch.pipeline().addFirst(PipelineUtil.SENDING_EVENT_CALLER, SendingEventHandler(eventManager))
+
+            val handshakePacket = HandshakePacket()
+
+            handshakePacket.protocolVersion = version
+            handshakePacket.serverAddress = address.hostName
+            handshakePacket.serverPort = address.port
+            handshakePacket.nextState = if (isLogin) 2 else 1
+
+            serverConnection.sendPacket(handshakePacket)
         }
     }
 
     var channelFutureListener = ChannelFutureListener {
-        // TODO
+        clientChannel = it.channel()
     }
 
     val eventManager = EventManager()
@@ -78,7 +104,7 @@ class GlacierClient {
         return this
     }
 
-    fun address(socketAddress: SocketAddress): GlacierClient {
+    fun address(socketAddress: InetSocketAddress): GlacierClient {
         address = socketAddress
         return this
     }
@@ -97,6 +123,10 @@ class GlacierClient {
             .localAddress(address)
             .connect(address)
             .addListener(channelFutureListener)
+    }
+
+    fun close() {
+        channel.close()
     }
 
     companion object {

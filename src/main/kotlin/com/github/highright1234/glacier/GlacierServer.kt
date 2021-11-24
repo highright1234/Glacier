@@ -56,7 +56,7 @@ class GlacierServer {
     private val protocols: MutableMap<Int, Protocol?> = HashMap()
 
     fun getProtocol(protocolVersion: Int): Protocol {
-        protocols.computeIfAbsent(protocolVersion) { k: Int? -> protocols.put(protocolVersion, Protocol()) }
+        protocols.computeIfAbsent(protocolVersion) { protocols.put(protocolVersion, Protocol()) }
         return protocols[protocolVersion]!!
     }
 
@@ -65,7 +65,7 @@ class GlacierServer {
         override fun initChannel(ch: SocketChannel) {
             val handshake = getProtocol(Protocol.Version.MINECRAFT_1_7_5).handshake
             val cliCon = ClientConnection(ch, handshake, this@GlacierServer)
-            ch.attr(PipelineUtil.CONNECTION).set(cliCon)
+            ch.attr(PipelineUtil.CLIENT_CONNECTION).set(cliCon)
             ch.pipeline().addAfter(
                 PipelineUtil.MINECRAFT_ENCODER,
                 PipelineUtil.PACKET_ENCODER,
@@ -82,7 +82,9 @@ class GlacierServer {
     }
 
     val channelFutureListener =
-        ChannelFutureListener { future -> clientConnections.add(future.channel().attr(PipelineUtil.CONNECTION).get()) }
+        ChannelFutureListener {
+                future -> clientConnections.add(future.channel().attr(PipelineUtil.CLIENT_CONNECTION).get())
+        }
 
     val eventManager = EventManager()
 

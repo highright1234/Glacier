@@ -6,7 +6,7 @@ import java.lang.Exception
 import io.netty.buffer.ByteBuf
 
 data class HandshakePacket(
-    var protocolVersion : Int = 756,
+    var protocolVersion : Int = 0,
     var serverAddress : String = "0.0.0.0",
     var serverPort : Int = 25565,
     var nextState : Int = 2

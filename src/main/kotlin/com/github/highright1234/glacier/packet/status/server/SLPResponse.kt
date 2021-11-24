@@ -8,7 +8,7 @@ import kotlin.Throws
 import java.lang.Exception
 import io.netty.buffer.ByteBuf
 
-data class SLPResponse(var slpResponseData : SLPResponseData) : MinecraftPacket() {
+data class SLPResponse(var slpResponseData : SLPResponseData = SLPResponseData()) : MinecraftPacket() {
 
     override fun write(buf: ByteBuf, version: Int) {
         writeString(Gson().toJson(slpResponseData), buf)

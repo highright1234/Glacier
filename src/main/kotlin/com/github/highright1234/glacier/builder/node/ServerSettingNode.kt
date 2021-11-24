@@ -65,7 +65,7 @@ class ServerSettingNode : SettingNode() {
     }
 
     fun addCommand(commandName : String, vararg alias : String) {
-
+        TODO()
     }
 
     data class PluginMessageData(val clientConnection : ClientConnection, val data : ByteArray) {
